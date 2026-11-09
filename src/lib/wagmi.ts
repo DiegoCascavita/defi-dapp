@@ -3,9 +3,14 @@
 import { http, createConfig, createStorage, cookieStorage, type CreateConnectorFn } from "wagmi";
 import { anvil } from "wagmi/chains";
 import { injected } from "wagmi/connectors/injected";
+import { anvilLocalWallet } from "./anvilConnector";
 import { contracts } from "./contracts";
 
-const connectors: CreateConnectorFn[] = [injected({ shimDisconnect: true })];
+const connectors: CreateConnectorFn[] = [
+  // Local Anvil burner (account #0) — works without MetaMask on cloud VMs.
+  anvilLocalWallet,
+  injected({ shimDisconnect: true }),
+];
 
 const wcProjectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
 if (wcProjectId) {
@@ -27,7 +32,8 @@ if (wcProjectId) {
 }
 
 /**
- * Anvil-first wagmi config. Injected covers MetaMask for local demos.
+ * Anvil-first wagmi config.
+ * Prefer "Anvil account" when MetaMask is unavailable; injected still covers MetaMask.
  * Set NEXT_PUBLIC_WC_PROJECT_ID to also register WalletConnect.
  */
 export const config = createConfig({

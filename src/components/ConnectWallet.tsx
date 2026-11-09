@@ -50,7 +50,11 @@ export function ConnectWallet() {
           disabled={isPending}
           onClick={() => connect({ connector, chainId: anvil.id })}
         >
-          {connector.name === "Injected" ? "Connect wallet" : connector.name}
+          {connector.type === "mock"
+            ? "Anvil account"
+            : connector.name === "Injected"
+              ? "Connect wallet"
+              : connector.name}
         </button>
       ))}
       {error ? <p className="form-error">{error.message}</p> : null}
