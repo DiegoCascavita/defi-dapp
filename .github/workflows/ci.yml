@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [Master, main]
+  pull_request:
+    branches: [Master, main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-build:
+    name: Lint & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # Default Anvil desk; no live RPC required for Next build.
+          NEXT_PUBLIC_NETWORK: anvil
+          NEXT_PUBLIC_CHAIN_ID: "31337"
+
+  e2e-smoke:
+    name: E2E smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-and-build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npm run test:e2e
+        env:
+          CI: true
+          NEXT_PUBLIC_NETWORK: anvil
+          NEXT_PUBLIC_CHAIN_ID: "31337"
