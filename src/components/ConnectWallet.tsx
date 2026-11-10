@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
-import { anvil } from "wagmi/chains";
+import { getActiveChainId, networkLabel } from "@/lib/network";
 import { shortenAddress } from "@/lib/format";
 
 export function ConnectWallet() {
+  const targetChainId = getActiveChainId();
   const { address, isConnected, chainId } = useAccount();
   const { connectors, connect, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
@@ -19,16 +20,16 @@ export function ConnectWallet() {
   }
 
   if (isConnected && address) {
-    const wrongNetwork = chainId !== anvil.id;
+    const wrongNetwork = chainId !== targetChainId;
     return (
       <div className="wallet-bar">
         {wrongNetwork ? (
           <button
             type="button"
             className="btn btn-warn"
-            onClick={() => switchChain({ chainId: anvil.id })}
+            onClick={() => switchChain({ chainId: targetChainId })}
           >
-            Switch to Anvil
+            Switch to {networkLabel()}
           </button>
         ) : (
           <span className="pill mono">{shortenAddress(address)}</span>
@@ -48,7 +49,7 @@ export function ConnectWallet() {
           type="button"
           className="btn btn-primary"
           disabled={isPending}
-          onClick={() => connect({ connector, chainId: anvil.id })}
+          onClick={() => connect({ connector, chainId: targetChainId })}
         >
           {connector.type === "mock"
             ? "Anvil account"

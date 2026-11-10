@@ -1,8 +1,10 @@
-import deployment from "../../deployments/anvil.json";
+import anvilDeployment from "../../deployments/anvil.json";
+import sepoliaDeployment from "../../deployments/sepolia.json";
 import { lendingPoolAbi } from "./abis/lendingPool";
 import { erc20Abi } from "./abis/erc20";
+import { isAnvilMode, isSepoliaMode, networkMode } from "./network";
 
-export type AnvilDeployment = {
+export type ProtocolDeployment = {
   chainId: number;
   rpcUrl: string;
   lendingPool: `0x${string}`;
@@ -12,32 +14,51 @@ export type AnvilDeployment = {
   secondaryOracle: `0x${string}`;
 };
 
+const ZERO = "0x0000000000000000000000000000000000000000" as const;
+
 function readEnvAddress(key: string): `0x${string}` | undefined {
   const value = process.env[key];
   if (!value || !/^0x[a-fA-F0-9]{40}$/.test(value)) return undefined;
   return value as `0x${string}`;
 }
 
+function asAddress(value: string | undefined, fallback: `0x${string}`): `0x${string}` {
+  if (value && /^0x[a-fA-F0-9]{40}$/.test(value)) return value as `0x${string}`;
+  return fallback;
+}
+
+const fileDeployment = isSepoliaMode ? sepoliaDeployment : anvilDeployment;
+
 /**
- * Resolve protocol addresses: env overrides win, then deployments/anvil.json.
- * After every Anvil restart, re-run `npm run sync:anvil` or set NEXT_PUBLIC_* vars.
+ * Resolve protocol addresses for the active network.
+ * Precedence: NEXT_PUBLIC_* env → deployments/{anvil|sepolia}.json.
+ * Sepolia placeholders are zero until defi-lending broadcast+verify lands —
+ * set env vars or edit deployments/sepolia.json (no secrets in git).
  */
-export const contracts: AnvilDeployment = {
-  chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? deployment.chainId),
-  rpcUrl: process.env.NEXT_PUBLIC_RPC_URL ?? deployment.rpcUrl,
+export const contracts: ProtocolDeployment = {
+  chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? fileDeployment.chainId),
+  rpcUrl: process.env.NEXT_PUBLIC_RPC_URL ?? fileDeployment.rpcUrl,
   lendingPool:
     readEnvAddress("NEXT_PUBLIC_LENDING_POOL") ??
-    (deployment.lendingPool as `0x${string}`),
+    asAddress(fileDeployment.lendingPool, ZERO),
   weth:
-    readEnvAddress("NEXT_PUBLIC_WETH") ?? (deployment.weth as `0x${string}`),
-  dai: readEnvAddress("NEXT_PUBLIC_DAI") ?? (deployment.dai as `0x${string}`),
+    readEnvAddress("NEXT_PUBLIC_WETH") ??
+    asAddress(fileDeployment.weth, ZERO),
+  dai:
+    readEnvAddress("NEXT_PUBLIC_DAI") ?? asAddress(fileDeployment.dai, ZERO),
   primaryFeed:
     readEnvAddress("NEXT_PUBLIC_PRIMARY_FEED") ??
-    (deployment.primaryFeed as `0x${string}`),
+    asAddress(fileDeployment.primaryFeed, ZERO),
   secondaryOracle:
     readEnvAddress("NEXT_PUBLIC_SECONDARY_ORACLE") ??
-    (deployment.secondaryOracle as `0x${string}`),
+    asAddress(fileDeployment.secondaryOracle, ZERO),
 };
+
+/** True when core market addresses are still zero placeholders (typical pre-Sepolia-deploy). */
+export const contractsConfigured =
+  contracts.lendingPool !== ZERO &&
+  contracts.weth !== ZERO &&
+  contracts.dai !== ZERO;
 
 export const abis = {
   lendingPool: lendingPoolAbi,
@@ -51,4 +72,10 @@ export const PROTOCOL = {
   liquidationThreshold: 80,
   liquidationBonusBps: 500,
   minHealthFactor: 1,
+  networkMode,
+  isAnvilMode,
+  isSepoliaMode,
 } as const;
+
+/** @deprecated Use ProtocolDeployment — kept for call sites that imported AnvilDeployment. */
+export type AnvilDeployment = ProtocolDeployment;

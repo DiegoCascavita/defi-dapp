@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AmountForm } from "./AmountForm";
 import { useMarketWrite, type MarketAction } from "@/hooks/useMarketWrite";
 import { formatToken } from "@/lib/format";
+import { isAnvilMode } from "@/lib/network";
 
 type Balances = {
   wethBalance?: bigint;
@@ -156,24 +157,30 @@ export function MarketActions({
         ) : null}
       </div>
 
-      <div className="faucet-row">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={!connected || isPending}
-          onClick={() => run({ action: "mintWeth", amount: 10n * 10n ** 18n })}
-        >
-          Mint 10 WETH (Anvil)
-        </button>
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={!connected || isPending}
-          onClick={() => run({ action: "mintDai", amount: 100_000n * 10n ** 18n })}
-        >
-          Mint 100k DAI (Anvil)
-        </button>
-      </div>
+      {isAnvilMode ? (
+        <div className="faucet-row">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={!connected || isPending}
+            onClick={() => run({ action: "mintWeth", amount: 10n * 10n ** 18n })}
+          >
+            Mint 10 WETH (Anvil)
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={!connected || isPending}
+            onClick={() => run({ action: "mintDai", amount: 100_000n * 10n ** 18n })}
+          >
+            Mint 100k DAI (Anvil)
+          </button>
+        </div>
+      ) : (
+        <p className="section-copy">
+          Sepolia mode: use public faucets for ETH / test tokens (see README). In-app mint is Anvil-only.
+        </p>
+      )}
 
       {status ? <p className="tx-status">{status}</p> : null}
     </section>

@@ -1,0 +1,10 @@
+{
+  "chainId": 11155111,
+  "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+  "lendingPool": "0x0000000000000000000000000000000000000000",
+  "weth": "0x0000000000000000000000000000000000000000",
+  "dai": "0x0000000000000000000000000000000000000000",
+  "primaryFeed": "0x0000000000000000000000000000000000000000",
+  "secondaryOracle": "0x0000000000000000000000000000000000000000",
+  "notes": "TODO(Phase 1 lending): replace placeholders after forge script DeployLending --broadcast --verify on Sepolia. Prefer NEXT_PUBLIC_* env or copy verified addresses into deployments/sepolia.json — never commit private keys."
+}

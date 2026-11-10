@@ -1,0 +1,10 @@
+{
+  "chainId": 11155111,
+  "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+  "lendingPool": "0x0000000000000000000000000000000000000000",
+  "weth": "0x0000000000000000000000000000000000000000",
+  "dai": "0x0000000000000000000000000000000000000000",
+  "primaryFeed": "0x0000000000000000000000000000000000000000",
+  "secondaryOracle": "0x0000000000000000000000000000000000000000",
+  "notes": "TODO(Phase 1 lending): Sepolia deploy not landed yet. Plug verified addresses via NEXT_PUBLIC_LENDING_POOL / WETH / DAI / PRIMARY_FEED / SECONDARY_ORACLE or rewrite this file. Do not hardcode secrets."
+}
