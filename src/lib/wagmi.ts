@@ -1,16 +1,20 @@
 "use client";
 
 import { http, createConfig, createStorage, cookieStorage, type CreateConnectorFn } from "wagmi";
-import { anvil } from "wagmi/chains";
+import { anvil, sepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors/injected";
 import { anvilLocalWallet } from "./anvilConnector";
 import { contracts } from "./contracts";
+import { isAnvilMode, isSepoliaMode } from "./network";
 
-const connectors: CreateConnectorFn[] = [
-  // Local Anvil burner (account #0) — works without MetaMask on cloud VMs.
-  anvilLocalWallet,
-  injected({ shimDisconnect: true }),
-];
+const connectors: CreateConnectorFn[] = [];
+
+// Local Anvil burner (account #0) — Anvil mode only; keeps PR #1 path intact.
+if (isAnvilMode) {
+  connectors.push(anvilLocalWallet);
+}
+
+connectors.push(injected({ shimDisconnect: true }));
 
 const wcProjectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
 if (wcProjectId) {
@@ -31,18 +35,25 @@ if (wcProjectId) {
   );
 }
 
+const anvilRpc = isAnvilMode ? contracts.rpcUrl : "http://127.0.0.1:8545";
+const sepoliaRpc = isSepoliaMode
+  ? contracts.rpcUrl
+  : "https://ethereum-sepolia-rpc.publicnode.com";
+
 /**
- * Anvil-first wagmi config.
- * Prefer "Anvil account" when MetaMask is unavailable; injected still covers MetaMask.
- * Set NEXT_PUBLIC_WC_PROJECT_ID to also register WalletConnect.
+ * Env-driven wagmi config (Anvil + Sepolia registered).
+ * Default desk target is Anvil (31337). Set NEXT_PUBLIC_NETWORK=sepolia
+ * (or CHAIN_ID=11155111) to connect/switch to Sepolia with NEXT_PUBLIC_*
+ * / deployments/sepolia.json addresses. Anvil account connector stays Anvil-only.
  */
 export const config = createConfig({
-  chains: [anvil],
+  chains: isSepoliaMode ? [sepolia, anvil] : [anvil, sepolia],
   connectors,
   ssr: true,
   storage: createStorage({ storage: cookieStorage }),
   transports: {
-    [anvil.id]: http(contracts.rpcUrl),
+    [anvil.id]: http(anvilRpc),
+    [sepolia.id]: http(sepoliaRpc),
   },
 });
 

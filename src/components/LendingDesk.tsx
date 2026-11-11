@@ -5,10 +5,14 @@ import { HealthFactor } from "./HealthFactor";
 import { LiquidatePanel } from "./LiquidatePanel";
 import { MarketActions } from "./MarketActions";
 import { MarketOverview } from "./MarketOverview";
+import { contractsConfigured } from "@/lib/contracts";
+import { getActiveChainId, isAnvilMode, isSepoliaMode, networkLabel } from "@/lib/network";
 import { useProtocolReads } from "@/hooks/useProtocolReads";
 
 export function LendingDesk() {
   const reads = useProtocolReads();
+  const chainId = getActiveChainId();
+  const label = networkLabel();
 
   return (
     <div className="desk">
@@ -17,7 +21,9 @@ export function LendingDesk() {
           <span className="brand-mark" aria-hidden />
           <div>
             <p className="brand-name">Cascade Lend</p>
-            <p className="brand-sub">Anvil desk · LendingPool</p>
+            <p className="brand-sub">
+              {label} desk · LendingPool · {chainId}
+            </p>
           </div>
         </div>
         <ConnectWallet />
@@ -29,7 +35,7 @@ export function LendingDesk() {
           <h1 className="brand-hero">Cascade Lend</h1>
           <p className="lede">
             Connect a wallet, post WETH, borrow DAI against a dual-oracle health factor —
-            wired to the Foundry lending market on local Anvil.
+            wired to the Foundry lending market on {isSepoliaMode ? "Sepolia" : "local Anvil"}.
           </p>
           <div className="hero-cta">
             <a className="btn btn-primary" href="#desk">
@@ -55,6 +61,15 @@ export function LendingDesk() {
           </div>
         </div>
       </section>
+
+      {isSepoliaMode && !contractsConfigured ? (
+        <p className="tx-status" role="status">
+          Sepolia addresses are still placeholders. Set{" "}
+          <code>NEXT_PUBLIC_LENDING_POOL</code> / <code>WETH</code> / <code>DAI</code> (and
+          oracle feeds) or update <code>deployments/sepolia.json</code> after the lending
+          Sepolia deploy verifies — see README.
+        </p>
+      ) : null}
 
       <div id="desk" className="desk-grid">
         <MarketOverview
@@ -96,9 +111,13 @@ export function LendingDesk() {
 
       <footer className="site-footer">
         <p>
-          Sibling protocol{" "}
-          <a href="https://github.com/DiegoCascavita/defi-lending">defi-lending</a>. UI
-          talks over wagmi/viem · chain 31337.
+          Cascade Suite:{" "}
+          <a href="https://github.com/DiegoCascavita/defi-stablecoin">defi-stablecoin</a>
+          {" → "}
+          <a href="https://github.com/DiegoCascavita/defi-lending">defi-lending</a>
+          {" → "}
+          defi-dapp. wagmi/viem · {label} ({chainId})
+          {isAnvilMode ? " · Anvil account connector available" : ""}.
         </p>
       </footer>
     </div>
