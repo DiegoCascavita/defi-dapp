@@ -7,9 +7,8 @@
  *   VAULT_REPO=/path/to/defi-vault npm run sync:vault
  *   npm run sync:vault -- /path/to/defi-vault
  *
- * Prefers broadcast/DeployVault.s.sol/31337/run-latest.json when present.
- * Falls back to CREATE-order addresses from a manual forge create sequence:
- *   ERC20Mock (vault asset) → CascadeVault → IdleStrategy
+ * Requires broadcast/DeployVault.s.sol/31337/run-latest.json (no CREATE-order guesses —
+ * those collide with DeployLending mocks on a shared Anvil).
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
@@ -56,16 +55,33 @@ if (existsSync(broadcastPath)) {
   idleStrategy = byName.IdleStrategy || null;
   vaultAsset = erc20Mocks[0] || byName.ERC20Mock || null;
 } else {
-  console.warn(
+  console.error(
     `Broadcast file not found:\n  ${broadcastPath}\n` +
-      `Using documented CREATE-order placeholders for a vault-only Anvil deploy.\n` +
-      `Deploy then re-run, or pass VAULT_REPO after forge script --broadcast.`,
+      `Refusing CREATE-order guesses — on a shared Anvil they collide with DeployLending mocks\n` +
+      `(and idleStrategy must not reuse primaryFeed). Deploy with forge script --broadcast,\n` +
+      `then re-run: VAULT_REPO=… npm run sync:vault`,
   );
-  // Fresh Anvil CREATE order for: ERC20Mock → CascadeVault → IdleStrategy
-  vaultAsset = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-  cascadeVault = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-  idleStrategy = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
-  source = "CREATE-order placeholders (vault-only Anvil); re-run after DeployVault broadcast";
+  process.exit(1);
+}
+
+if (!cascadeVault || !vaultAsset || !idleStrategy) {
+  console.error(
+    "Broadcast did not include CascadeVault + ERC20Mock/vault asset + IdleStrategy addresses.",
+    { cascadeVault, vaultAsset, idleStrategy },
+  );
+  process.exit(1);
+}
+
+if (
+  idleStrategy.toLowerCase() === String(existing.primaryFeed || "").toLowerCase() ||
+  vaultAsset.toLowerCase() === String(existing.dai || "").toLowerCase() ||
+  vaultAsset.toLowerCase() === String(existing.weth || "").toLowerCase()
+) {
+  console.error(
+    "Vault addresses collide with lending deployment fields — deploy vault on this Anvil after lending, then sync the broadcast (do not use fresh-Anvil CREATE-order guesses).",
+    { cascadeVault, vaultAsset, idleStrategy, primaryFeed: existing.primaryFeed },
+  );
+  process.exit(1);
 }
 
 const deployment = {

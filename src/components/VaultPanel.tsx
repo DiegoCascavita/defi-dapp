@@ -23,6 +23,8 @@ export function VaultPanel() {
   }, [error, hash, isSuccess]);
 
   const needsApprove = (reads.assetAllowance ?? 0n) === 0n;
+  const permitReady =
+    Boolean(reads.assetName?.trim()) && reads.assetNonce !== undefined;
   const feeBps = reads.withdrawalFeeBps !== undefined ? Number(reads.withdrawalFeeBps) : null;
 
   return (
@@ -78,7 +80,7 @@ export function VaultPanel() {
           <p className="field-helper vault-addr">
             Vault {shortenAddress(contracts.cascadeVault)} · asset{" "}
             {shortenAddress(contracts.vaultAsset)}
-            {isSepoliaMode ? " · Sepolia placeholder until live deploy" : " · Anvil demo"}
+            {isSepoliaMode ? " · Sepolia vault" : " · Anvil demo"}
           </p>
 
           <div className="action-grid">
@@ -107,8 +109,14 @@ export function VaultPanel() {
               label="Deposit with permit"
               symbol={PROTOCOL.vaultAssetSymbol}
               cta="Sign + deposit"
-              disabled={!reads.isConnected || isPending || !vaultConfigured}
-              helper="EIP-2612 permit on underlying, then depositWithPermit (no prior approve tx)"
+              disabled={
+                !reads.isConnected || isPending || !vaultConfigured || !permitReady
+              }
+              helper={
+                permitReady
+                  ? "EIP-2612 permit on underlying, then depositWithPermit (no prior approve tx)"
+                  : "Waiting for vault asset name + permit nonce before signing"
+              }
               onSubmitAmount={async (amount) => {
                 await run({
                   action: "depositWithPermit",

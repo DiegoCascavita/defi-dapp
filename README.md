@@ -53,10 +53,10 @@ Addresses load from `deployments/anvil.json` or `deployments/sepolia.json` (chos
 
 ### Cascade Vault (demo)
 
-The vault panel is a **portfolio demo** of [defi-vault](https://github.com/DiegoCascavita/defi-vault) — not production yield. On Anvil the vault uses its **own mock DAI** (`vaultAsset`), separate from lending DAI. Sepolia vault fields in `deployments/sepolia.json` are **zero placeholders** until a vault deploy lands (follow-up; do not expect live vault txs on Sepolia yet).
+The vault panel is a **portfolio demo** of [defi-vault](https://github.com/DiegoCascavita/defi-vault) — not production yield. On Anvil the vault uses its **own mock DAI** (`vaultAsset`), separate from lending DAI. **Anvil and Sepolia vault fields ship as zero placeholders** until `npm run sync:vault` reads a real `DeployVault` broadcast (CREATE-order address guesses collide with `DeployLending` mocks on the same Anvil). Sepolia vault deploy remains a follow-up — do not expect live vault txs on Sepolia yet.
 
 ```bash
-# After deploying defi-vault on Anvil:
+# After forge script --broadcast for defi-vault on the same Anvil as lending:
 VAULT_REPO=../defi-vault npm run sync:vault
 ```
 
@@ -109,12 +109,13 @@ Optional — Cascade Vault on the same Anvil (own mock DAI):
 
 ```bash
 cd ../defi-vault
-# Prefer forge create / fixed DeployVault once owner wiring is correct; then:
+# DeployVault via forge script --broadcast on this Anvil (after lending).
+# Do not paste fresh-Anvil CREATE-order addresses by hand.
 cd ../defi-dapp
 VAULT_REPO=../defi-vault npm run sync:vault
 ```
 
-`scripts/sync-vault-addresses.mjs` merges `cascadeVault` / `vaultAsset` / `idleStrategy` into `deployments/anvil.json`.
+`scripts/sync-vault-addresses.mjs` merges `cascadeVault` / `vaultAsset` / `idleStrategy` into `deployments/anvil.json` from the broadcast only (exits if missing or colliding with lending fields).
 
 MetaMask: add network RPC `http://127.0.0.1:8545`, chain id `31337`, currency `ETH`. Import Anvil account #0 if needed:
 
@@ -221,6 +222,6 @@ tests/                 # Playwright smoke
 ## Notes
 
 - Protocol ABIs are vendored from `defi-lending` / `defi-vault` (`forge build` → `out/`). Re-copy when the Solidity API changes.
-- Fresh Anvil = new addresses. Always re-sync lending + vault before demoing (`sync:anvil`, `sync:vault`).
+- Fresh Anvil = new addresses. Always re-sync lending + vault before demoing (`sync:anvil`, `sync:vault`). Vault UI stays disabled while vault addresses are zero.
 - Sepolia: lending is live; **vault Sepolia deploy is a follow-up** (placeholders only — no secrets/broadcast attempted from this dApp PR).
 - English UI and docs only. No third-party watermark badges in this repo.

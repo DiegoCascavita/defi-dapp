@@ -6,9 +6,9 @@
   "dai": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
   "primaryFeed": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
   "secondaryOracle": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  "cascadeVault": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-  "vaultAsset": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "idleStrategy": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "cascadeVault": "0x0000000000000000000000000000000000000000",
+  "vaultAsset": "0x0000000000000000000000000000000000000000",
+  "idleStrategy": "0x0000000000000000000000000000000000000000",
   "deployedAt": "2026-11-11T14:00:00Z",
-  "source": "Lending: defi-lending DeployLending on Anvil. Vault: standalone forge create CascadeVault + IdleStrategy on fresh Anvil (own mock DAI). Re-sync after every Anvil restart: npm run sync:anvil && npm run sync:vault"
+  "source": "Lending: defi-lending DeployLending on Anvil. Vault fields stay zero until VAULT_REPO=… npm run sync:vault reads a real DeployVault broadcast — do not commit CREATE-order guesses (they collide with lending mocks on the same Anvil)."
 }

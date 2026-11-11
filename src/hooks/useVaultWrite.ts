@@ -80,11 +80,21 @@ export function useVaultWrite(onSettled?: () => void) {
           });
           break;
         case "depositWithPermit": {
+          // Refuse silent domain/nonce fallbacks — a wrong EIP-712 name or stale/zero
+          // nonce produces a signature that can still be prompted in the wallet.
+          if (!assetName?.trim()) {
+            throw new Error("Vault asset EIP-712 name not loaded yet — wait and retry");
+          }
+          if (nonce === undefined) {
+            throw new Error("Vault asset permit nonce not loaded yet — wait and retry");
+          }
+          if (amount === undefined) {
+            throw new Error("Permit deposit requires an amount");
+          }
           const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30);
-          const name = assetName || "Mock DAI";
           const signature = await signTypedDataAsync({
             domain: {
-              name,
+              name: assetName,
               version: "1",
               chainId: getActiveChainId(),
               verifyingContract: asset,
@@ -94,8 +104,8 @@ export function useVaultWrite(onSettled?: () => void) {
             message: {
               owner: address,
               spender: vault,
-              value: amount!,
-              nonce: nonce ?? 0n,
+              value: amount,
+              nonce,
               deadline,
             },
           });
@@ -104,7 +114,7 @@ export function useVaultWrite(onSettled?: () => void) {
             address: vault,
             abi: abis.cascadeVault,
             functionName: "depositWithPermit",
-            args: [amount!, address, deadline, Number(v), r, s],
+            args: [amount, address, deadline, Number(v), r, s],
           });
           break;
         }
