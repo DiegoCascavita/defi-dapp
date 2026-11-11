@@ -178,7 +178,8 @@ export function MarketActions({
         </div>
       ) : (
         <p className="section-copy">
-          Sepolia mode: use public faucets for ETH / test tokens (see README). In-app mint is Anvil-only.
+          Sepolia mode: faucet ETH, wrap to canonical WETH via deposit(), and use the deployed mock
+          DAI (see README). In-app mint is Anvil-only.
         </p>
       )}
 
