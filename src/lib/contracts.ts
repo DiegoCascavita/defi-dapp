@@ -13,9 +13,9 @@ export type ProtocolDeployment = {
   dai: `0x${string}`;
   primaryFeed: `0x${string}`;
   secondaryOracle: `0x${string}`;
-  /** CascadeVault (ERC-4626) — Anvil demo addresses; Sepolia zero until deployed. */
+  /** CascadeVault (ERC-4626) — Anvil demo or live Sepolia address. */
   cascadeVault: `0x${string}`;
-  /** Underlying asset for the vault (vault mock DAI on Anvil — not lending DAI). */
+  /** Underlying vault asset (Anvil mock DAI ≠ lending DAI; Sepolia = canonical WETH). */
   vaultAsset: `0x${string}`;
   idleStrategy: `0x${string}`;
 };
@@ -38,8 +38,7 @@ const fileDeployment = isSepoliaMode ? sepoliaDeployment : anvilDeployment;
 /**
  * Resolve protocol addresses for the active network.
  * Precedence: NEXT_PUBLIC_* env → deployments/{anvil|sepolia}.json.
- * Sepolia ships with live Cascade lending addresses in deployments/sepolia.json;
- * vault fields stay zero until a Sepolia vault deploy (override via NEXT_PUBLIC_*).
+ * Sepolia ships live Cascade lending + CascadeVault addresses in deployments/sepolia.json.
  */
 export const contracts: ProtocolDeployment = {
   chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? fileDeployment.chainId),
@@ -90,9 +89,17 @@ export const contractsConfigured =
   contracts.weth !== ZERO &&
   contracts.dai !== ZERO;
 
-/** True when Cascade Vault addresses are wired (Anvil demo or future Sepolia deploy). */
+/** True when Cascade Vault addresses are wired (Anvil demo or live Sepolia). */
 export const vaultConfigured =
   contracts.cascadeVault !== ZERO && contracts.vaultAsset !== ZERO;
+
+/**
+ * Canonical Sepolia WETH has no EIP-2612 (`nonces` / `DOMAIN_SEPARATOR` / `permit` revert).
+ * Permit deposit is Anvil mock-asset only — never offer it when the vault asset is WETH.
+ */
+export const vaultAssetSupportsPermit =
+  vaultConfigured &&
+  contracts.vaultAsset.toLowerCase() !== contracts.weth.toLowerCase();
 
 export const abis = {
   lendingPool: lendingPoolAbi,
@@ -100,12 +107,16 @@ export const abis = {
   erc20: erc20Abi,
 } as const;
 
+/** Anvil vault uses mock DAI / cvDAI; Sepolia vault is WETH / cvWETH. */
+const vaultAssetSymbol = isSepoliaMode ? "WETH" : "mDAI";
+const vaultShareSymbol = isSepoliaMode ? "cvWETH" : "cvDAI";
+
 export const PROTOCOL = {
   name: "Cascade Lend",
   collateralSymbol: "WETH",
   debtSymbol: "DAI",
-  vaultShareSymbol: "cvDAI",
-  vaultAssetSymbol: "mDAI",
+  vaultShareSymbol,
+  vaultAssetSymbol,
   liquidationThreshold: 80,
   liquidationBonusBps: 500,
   minHealthFactor: 1,
