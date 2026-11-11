@@ -219,7 +219,8 @@ a {
 .overview-panel,
 .health-panel,
 .actions-panel,
-.liquidate-panel {
+.liquidate-panel,
+.vault-panel {
   background: color-mix(in oklab, var(--foam) 92%, white);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -228,8 +229,21 @@ a {
 }
 
 .actions-panel,
-.liquidate-panel {
+.liquidate-panel,
+.vault-panel {
   grid-column: 1 / -1;
+}
+
+.vault-panel {
+  border-color: color-mix(in oklab, var(--copper) 35%, var(--line));
+}
+
+.vault-stats {
+  margin-bottom: 0.85rem;
+}
+
+.vault-addr {
+  margin: 0 0 1rem;
 }
 
 .section-kicker {

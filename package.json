@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "sync:anvil": "node scripts/sync-anvil-addresses.mjs",
+    "sync:vault": "node scripts/sync-vault-addresses.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

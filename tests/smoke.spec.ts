@@ -7,5 +7,7 @@ test("landing desk renders core panels", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Health factor" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Market actions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Liquidate" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Cascade Vault" })).toBeVisible();
+  await expect(page.getByText(/portfolio demo only/i)).toBeVisible();
   await expect(page.getByRole("button", { name: /Connect wallet|MetaMask|Injected/i })).toBeVisible();
 });

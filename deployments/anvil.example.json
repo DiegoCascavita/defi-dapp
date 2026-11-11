@@ -6,5 +6,8 @@
   "dai": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
   "primaryFeed": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
   "secondaryOracle": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  "notes": "Fresh Anvil + forge script DeployLending. Re-sync after every Anvil restart: npm run sync:anvil"
+  "cascadeVault": "0x0000000000000000000000000000000000000000",
+  "vaultAsset": "0x0000000000000000000000000000000000000000",
+  "idleStrategy": "0x0000000000000000000000000000000000000000",
+  "notes": "Lending addresses from DeployLending. Vault zeros until npm run sync:vault with a real broadcast (CREATE-order placeholders collide with lending on the same Anvil)."
 }

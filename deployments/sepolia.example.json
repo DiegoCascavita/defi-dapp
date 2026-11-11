@@ -6,5 +6,8 @@
   "dai": "0x3e98D8700FfD75078F918870BA13f32a177a7cbd",
   "primaryFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
   "secondaryOracle": "0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09",
-  "notes": "Example matches deployments/sepolia.json (Cascade lending Sepolia). Prefer NEXT_PUBLIC_* env overrides for local experiments — never commit private keys."
+  "cascadeVault": "0x0000000000000000000000000000000000000000",
+  "vaultAsset": "0x0000000000000000000000000000000000000000",
+  "idleStrategy": "0x0000000000000000000000000000000000000000",
+  "notes": "Example matches deployments/sepolia.json. Vault zeros until Sepolia deploy. Prefer NEXT_PUBLIC_* overrides — never commit private keys."
 }
