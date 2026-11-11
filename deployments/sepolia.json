@@ -6,8 +6,8 @@
   "dai": "0x3e98D8700FfD75078F918870BA13f32a177a7cbd",
   "primaryFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
   "secondaryOracle": "0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09",
-  "cascadeVault": "0x0000000000000000000000000000000000000000",
-  "vaultAsset": "0x0000000000000000000000000000000000000000",
-  "idleStrategy": "0x0000000000000000000000000000000000000000",
-  "notes": "Live Cascade lending deploy on Sepolia (defi-lending PR #3 / block 12111618). Vault fields are placeholders until CascadeVault is deployed on Sepolia — set NEXT_PUBLIC_CASCADE_VAULT / VAULT_ASSET / IDLE_STRATEGY or update this file. Never commit private keys."
+  "cascadeVault": "0xDb56Bc666F3F76145325bA1433Ba67AD3eEE3d61",
+  "vaultAsset": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+  "idleStrategy": "0x92D069059C9dA4532Ca0d60a466b865F45c59512",
+  "notes": "Live Cascade lending (defi-lending PR #3 / block 12111618) + CascadeVault / IdleStrategy (defi-vault PR #2 / block 12112393). Vault asset is canonical Sepolia WETH (same as lending collateral). Prefer NEXT_PUBLIC_* overrides — never commit private keys."
 }

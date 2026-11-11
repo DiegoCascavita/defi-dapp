@@ -45,7 +45,7 @@ Browser (Cascade Lend + Vault)
    ├──► LendingPool  ←── dual oracle (Chainlink + secondary)
    │       ├── WETH collateral
    │       └── DAI liquidity / debt
-   └──► CascadeVault (ERC-4626) ← vault mock DAI (Anvil demo; Sepolia TBD)
+   └──► CascadeVault (ERC-4626) ← mock DAI (Anvil) / WETH (Sepolia)
             └── IdleStrategy
 ```
 
@@ -53,7 +53,7 @@ Addresses load from `deployments/anvil.json` or `deployments/sepolia.json` (chos
 
 ### Cascade Vault (demo)
 
-The vault panel is a **portfolio demo** of [defi-vault](https://github.com/DiegoCascavita/defi-vault) — not production yield. On Anvil the vault uses its **own mock DAI** (`vaultAsset`), separate from lending DAI. **Anvil and Sepolia vault fields ship as zero placeholders** until `npm run sync:vault` reads a real `DeployVault` broadcast (CREATE-order address guesses collide with `DeployLending` mocks on the same Anvil). Sepolia vault deploy remains a follow-up — do not expect live vault txs on Sepolia yet.
+The vault panel is a **portfolio demo** of [defi-vault](https://github.com/DiegoCascavita/defi-vault) — not production yield. On Anvil the vault uses its **own mock DAI** (`vaultAsset`), separate from lending DAI — Anvil vault fields stay zero until `npm run sync:vault` reads a real `DeployVault` broadcast (CREATE-order address guesses collide with `DeployLending` mocks on the same Anvil). On Sepolia the vault is live (`cvWETH` over canonical WETH); addresses ship in `deployments/sepolia.json`.
 
 ```bash
 # After forge script --broadcast for defi-vault on the same Anvil as lending:
@@ -142,6 +142,9 @@ Sepolia mode is env-driven. Live Cascade lending addresses ship in `deployments/
 | DAI (ERC20Mock) | `0x3e98D8700FfD75078F918870BA13f32a177a7cbd` |
 | Primary ETH/USD (Chainlink) | `0x694AA1769357215DE4FAC081bf1f309aDC325306` |
 | Secondary oracle (mock) | `0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09` |
+| CascadeVault (`cvWETH`) | `0xDb56Bc666F3F76145325bA1433Ba67AD3eEE3d61` |
+| Vault asset (WETH) | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
+| IdleStrategy | `0x92D069059C9dA4532Ca0d60a466b865F45c59512` |
 
 1. Create `.env.local` for Sepolia (do **not** leave Anvil `NEXT_PUBLIC_*` address vars set — env overrides the JSON file):
 
@@ -155,6 +158,9 @@ NEXT_PUBLIC_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 # NEXT_PUBLIC_DAI=0x3e98D8700FfD75078F918870BA13f32a177a7cbd
 # NEXT_PUBLIC_PRIMARY_FEED=0x694AA1769357215DE4FAC081bf1f309aDC325306
 # NEXT_PUBLIC_SECONDARY_ORACLE=0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09
+# NEXT_PUBLIC_CASCADE_VAULT=0xDb56Bc666F3F76145325bA1433Ba67AD3eEE3d61
+# NEXT_PUBLIC_VAULT_ASSET=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9
+# NEXT_PUBLIC_IDLE_STRATEGY=0x92D069059C9dA4532Ca0d60a466b865F45c59512
 ```
 
 Public env vars only (`NEXT_PUBLIC_*`). Never commit `PRIVATE_KEY`, mnemonics, or write-capable RPC secrets.
@@ -171,9 +177,9 @@ Precedence: `NEXT_PUBLIC_*` env wins over `deployments/sepolia.json`.
 | Sepolia ETH | [Google Cloud Web3 faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) |
 | Sepolia ETH | [Alchemy Sepolia faucet](https://www.alchemy.com/faucets/ethereum-sepolia) |
 | Sepolia ETH | [Infura faucet](https://www.infura.io/faucet/sepolia) |
-| WETH | Canonical Sepolia WETH — wrap ETH with `deposit()` (no `mint`) |
+| WETH | Canonical Sepolia WETH — wrap ETH with `deposit()` (no `mint`); also the Cascade Vault asset |
 | DAI | Deployed `ERC20Mock` at the address above (see [defi-lending README](https://github.com/DiegoCascavita/defi-lending)) |
-| Cascade Vault | **Not deployed on Sepolia yet** — UI shows placeholders; Anvil demo only |
+| Cascade Vault | Live on Sepolia (`cvWETH` / IdleStrategy from [defi-vault](https://github.com/DiegoCascavita/defi-vault) PR #2) — deposit/withdraw WETH via the vault panel |
 
 In-app **Mint WETH/DAI** (and vault mDAI) buttons are Anvil-only.
 
@@ -223,5 +229,5 @@ tests/                 # Playwright smoke
 
 - Protocol ABIs are vendored from `defi-lending` / `defi-vault` (`forge build` → `out/`). Re-copy when the Solidity API changes.
 - Fresh Anvil = new addresses. Always re-sync lending + vault before demoing (`sync:anvil`, `sync:vault`). Vault UI stays disabled while vault addresses are zero.
-- Sepolia: lending is live; **vault Sepolia deploy is a follow-up** (placeholders only — no secrets/broadcast attempted from this dApp PR).
+- Sepolia: lending + Cascade Vault are live in `deployments/sepolia.json` (vault asset = canonical WETH). No secrets committed.
 - English UI and docs only. No third-party watermark badges in this repo.
