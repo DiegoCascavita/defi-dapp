@@ -4,13 +4,18 @@ import { useMemo } from "react";
 import { AmountForm } from "./AmountForm";
 import { useVaultReads } from "@/hooks/useVaultReads";
 import { useVaultWrite } from "@/hooks/useVaultWrite";
-import { contracts, PROTOCOL, vaultConfigured } from "@/lib/contracts";
+import {
+  contracts,
+  PROTOCOL,
+  vaultAssetSupportsPermit,
+  vaultConfigured,
+} from "@/lib/contracts";
 import { formatToken, shortenAddress } from "@/lib/format";
 import { isAnvilMode, isSepoliaMode } from "@/lib/network";
 
 /**
- * Cascade Vault desk panel — ERC-4626 deposit / withdraw (+ optional permit).
- * Demo-only until Sepolia vault addresses are filled in.
+ * Cascade Vault desk panel — ERC-4626 deposit / withdraw (+ Anvil permit).
+ * Sepolia uses live cvWETH over canonical WETH (no EIP-2612 on that asset).
  */
 export function VaultPanel() {
   const reads = useVaultReads();
@@ -24,7 +29,9 @@ export function VaultPanel() {
 
   const needsApprove = (reads.assetAllowance ?? 0n) === 0n;
   const permitReady =
-    Boolean(reads.assetName?.trim()) && reads.assetNonce !== undefined;
+    vaultAssetSupportsPermit &&
+    Boolean(reads.assetName?.trim()) &&
+    reads.assetNonce !== undefined;
   const feeBps = reads.withdrawalFeeBps !== undefined ? Number(reads.withdrawalFeeBps) : null;
 
   return (
@@ -40,14 +47,26 @@ export function VaultPanel() {
         >
           defi-vault
         </a>
-        . Park mock DAI for cvDAI shares — <strong>portfolio demo only</strong>, not production
-        yield. Underlying is the vault&apos;s own mock asset (separate from lending DAI).
+        .{" "}
+        {isSepoliaMode ? (
+          <>
+            Deposit Sepolia WETH for {PROTOCOL.vaultShareSymbol} shares —{" "}
+            <strong>portfolio demo only</strong>, not production yield. Vault asset is
+            canonical WETH (same token as lending collateral; wrap ETH first).
+          </>
+        ) : (
+          <>
+            Park mock DAI for {PROTOCOL.vaultShareSymbol} shares —{" "}
+            <strong>portfolio demo only</strong>, not production yield. Underlying is the
+            vault&apos;s own mock asset (separate from lending DAI).
+          </>
+        )}
       </p>
 
       {!vaultConfigured ? (
         <p className="tx-status" role="status">
           {isSepoliaMode
-            ? "Vault not deployed on Sepolia yet — addresses are placeholders. Anvil demo works locally after sync:vault."
+            ? "Vault addresses missing on Sepolia — set deployments/sepolia.json or NEXT_PUBLIC_CASCADE_VAULT / VAULT_ASSET."
             : "Vault addresses missing. Deploy defi-vault on Anvil, then run npm run sync:vault."}
         </p>
       ) : (
@@ -105,27 +124,29 @@ export function VaultPanel() {
                 await run({ action: "withdraw", amount });
               }}
             />
-            <AmountForm
-              label="Deposit with permit"
-              symbol={PROTOCOL.vaultAssetSymbol}
-              cta="Sign + deposit"
-              disabled={
-                !reads.isConnected || isPending || !vaultConfigured || !permitReady
-              }
-              helper={
-                permitReady
-                  ? "EIP-2612 permit on underlying, then depositWithPermit (no prior approve tx)"
-                  : "Waiting for vault asset name + permit nonce before signing"
-              }
-              onSubmitAmount={async (amount) => {
-                await run({
-                  action: "depositWithPermit",
-                  amount,
-                  assetName: reads.assetName,
-                  nonce: reads.assetNonce,
-                });
-              }}
-            />
+            {vaultAssetSupportsPermit ? (
+              <AmountForm
+                label="Deposit with permit"
+                symbol={PROTOCOL.vaultAssetSymbol}
+                cta="Sign + deposit"
+                disabled={
+                  !reads.isConnected || isPending || !vaultConfigured || !permitReady
+                }
+                helper={
+                  permitReady
+                    ? "EIP-2612 permit on underlying, then depositWithPermit (no prior approve tx)"
+                    : "Waiting for vault asset name + permit nonce before signing"
+                }
+                onSubmitAmount={async (amount) => {
+                  await run({
+                    action: "depositWithPermit",
+                    amount,
+                    assetName: reads.assetName,
+                    nonce: reads.assetNonce,
+                  });
+                }}
+              />
+            ) : null}
           </div>
 
           {isAnvilMode ? (

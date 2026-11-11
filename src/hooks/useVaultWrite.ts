@@ -8,7 +8,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { hexToSignature } from "viem";
-import { abis, contracts } from "@/lib/contracts";
+import { abis, contracts, vaultAssetSupportsPermit } from "@/lib/contracts";
 import { getActiveChainId } from "@/lib/network";
 
 export type VaultAction =
@@ -80,6 +80,12 @@ export function useVaultWrite(onSettled?: () => void) {
           });
           break;
         case "depositWithPermit": {
+          // Canonical Sepolia WETH has no EIP-2612 — never prompt a useless signature.
+          if (!vaultAssetSupportsPermit) {
+            throw new Error(
+              "Vault asset does not support EIP-2612 permit — use approve + deposit",
+            );
+          }
           // Refuse silent domain/nonce fallbacks — a wrong EIP-712 name or stale/zero
           // nonce produces a signature that can still be prompted in the wallet.
           if (!assetName?.trim()) {
