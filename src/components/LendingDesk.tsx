@@ -5,6 +5,7 @@ import { HealthFactor } from "./HealthFactor";
 import { LiquidatePanel } from "./LiquidatePanel";
 import { MarketActions } from "./MarketActions";
 import { MarketOverview } from "./MarketOverview";
+import { VaultPanel } from "./VaultPanel";
 import { contracts, contractsConfigured } from "@/lib/contracts";
 import { getActiveChainId, isAnvilMode, isSepoliaMode, networkLabel } from "@/lib/network";
 import { useProtocolReads } from "@/hooks/useProtocolReads";
@@ -117,6 +118,7 @@ export function LendingDesk() {
           daiAllowance={reads.daiAllowance}
           onRefresh={reads.refetchAll}
         />
+        <VaultPanel />
       </div>
 
       <footer className="site-footer">
@@ -126,7 +128,10 @@ export function LendingDesk() {
           {" → "}
           <a href="https://github.com/DiegoCascavita/defi-lending">defi-lending</a>
           {" → "}
-          defi-dapp. wagmi/viem · {label} ({chainId})
+          defi-dapp
+          {" → "}
+          <a href="https://github.com/DiegoCascavita/defi-vault">defi-vault</a>
+          . wagmi/viem · {label} ({chainId})
           {isAnvilMode ? " · Anvil account connector available" : ""}.
         </p>
       </footer>

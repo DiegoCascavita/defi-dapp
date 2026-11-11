@@ -1,22 +1,26 @@
 # Cascade Lend (defi-dapp)
 
-Next.js + TypeScript portfolio dApp for the overcollateralized lending market in [DiegoCascavita/defi-lending](https://github.com/DiegoCascavita/defi-lending).
+Next.js + TypeScript portfolio dApp for the overcollateralized lending market in [DiegoCascavita/defi-lending](https://github.com/DiegoCascavita/defi-lending), plus a **demo Cascade Vault** panel (ERC-4626) wired to [DiegoCascavita/defi-vault](https://github.com/DiegoCascavita/defi-vault).
 
 Stack: **wagmi / viem**, injected wallet (MetaMask) + optional WalletConnect, **Anvil** (`31337`, default) or **Sepolia** (`11155111`) via env.
 
 ## Cascade Suite
 
-Related DeFi portfolio (stablecoin → lending → UI):
+Related DeFi portfolio (stablecoin → lending → UI → vault):
 
 | Repo | Role |
 |---|---|
 | [defi-stablecoin](https://github.com/DiegoCascavita/defi-stablecoin) | Overcollateralized DSC + `OracleLib` (chapter 1) |
 | [defi-lending](https://github.com/DiegoCascavita/defi-lending) | Dual-oracle `LendingPool`, liquidations, Foundry tests |
-| [defi-dapp](https://github.com/DiegoCascavita/defi-dapp) (this repo) | Cascade Lend desk — wagmi/viem frontend |
+| [defi-dapp](https://github.com/DiegoCascavita/defi-dapp) (this repo) | Cascade Lend desk + demo Vault panel |
+| [defi-vault](https://github.com/DiegoCascavita/defi-vault) | ERC-4626 CascadeVault + Permit / IdleStrategy |
 
 ```
-defi-stablecoin  →  defi-lending  →  defi-dapp (Cascade Lend)
+defi-stablecoin  →  defi-lending  →  defi-dapp (Cascade Lend + Vault panel)
      DSCEngine         LendingPool         Next.js UI
+                           │
+                           ▼
+                    defi-vault (ERC-4626 demo)
 ```
 
 ## Features
@@ -29,21 +33,32 @@ defi-stablecoin  →  defi-lending  →  defi-dapp (Cascade Lend)
 - Live health factor + USD collateral/debt
 - Optional liquidate panel (HF &lt; 1)
 - Local Anvil mint helpers for mock WETH / DAI
+- **Cascade Vault panel** — deposit / withdraw / optional EIP-2612 `depositWithPermit` (demo copy; Anvil first)
 - Env-driven **Sepolia public mode** (addresses from `NEXT_PUBLIC_*` or `deployments/sepolia.json`)
 - Vendored ABIs under `vendor/abis/` + typed copies in `src/lib/abis/`
 
 ## Architecture
 
 ```
-Browser (Cascade Lend)
+Browser (Cascade Lend + Vault)
    │  wagmi / viem
-   ▼
-LendingPool  ←── dual oracle (Chainlink + secondary)
-   ├── WETH collateral
-   └── DAI liquidity / debt
+   ├──► LendingPool  ←── dual oracle (Chainlink + secondary)
+   │       ├── WETH collateral
+   │       └── DAI liquidity / debt
+   └──► CascadeVault (ERC-4626) ← vault mock DAI (Anvil demo; Sepolia TBD)
+            └── IdleStrategy
 ```
 
 Addresses load from `deployments/anvil.json` or `deployments/sepolia.json` (chosen by network mode), overridable via `NEXT_PUBLIC_*` (see `.env.example`).
+
+### Cascade Vault (demo)
+
+The vault panel is a **portfolio demo** of [defi-vault](https://github.com/DiegoCascavita/defi-vault) — not production yield. On Anvil the vault uses its **own mock DAI** (`vaultAsset`), separate from lending DAI. Sepolia vault fields in `deployments/sepolia.json` are **zero placeholders** until a vault deploy lands (follow-up; do not expect live vault txs on Sepolia yet).
+
+```bash
+# After deploying defi-vault on Anvil:
+VAULT_REPO=../defi-vault npm run sync:vault
+```
 
 ## Prerequisites
 
@@ -90,6 +105,17 @@ LENDING_REPO=../defi-lending npm run sync:anvil
 
 `scripts/sync-anvil-addresses.mjs` reads `broadcast/DeployLending.s.sol/31337/run-latest.json` and rewrites `deployments/anvil.json`.
 
+Optional — Cascade Vault on the same Anvil (own mock DAI):
+
+```bash
+cd ../defi-vault
+# Prefer forge create / fixed DeployVault once owner wiring is correct; then:
+cd ../defi-dapp
+VAULT_REPO=../defi-vault npm run sync:vault
+```
+
+`scripts/sync-vault-addresses.mjs` merges `cascadeVault` / `vaultAsset` / `idleStrategy` into `deployments/anvil.json`.
+
 MetaMask: add network RPC `http://127.0.0.1:8545`, chain id `31337`, currency `ETH`. Import Anvil account #0 if needed:
 
 `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
@@ -102,6 +128,7 @@ Suggested demo flow in the UI:
 2. Mint 10 WETH + 100k DAI (faucet buttons)
 3. Supply DAI liquidity → deposit WETH collateral → borrow DAI
 4. Watch health factor; repay or withdraw; optionally liquidate another account
+5. Optional vault demo: mint vault mDAI → Deposit (or Sign + deposit with permit) → Withdraw
 
 ## Point the UI at Sepolia
 
@@ -145,8 +172,9 @@ Precedence: `NEXT_PUBLIC_*` env wins over `deployments/sepolia.json`.
 | Sepolia ETH | [Infura faucet](https://www.infura.io/faucet/sepolia) |
 | WETH | Canonical Sepolia WETH — wrap ETH with `deposit()` (no `mint`) |
 | DAI | Deployed `ERC20Mock` at the address above (see [defi-lending README](https://github.com/DiegoCascavita/defi-lending)) |
+| Cascade Vault | **Not deployed on Sepolia yet** — UI shows placeholders; Anvil demo only |
 
-In-app **Mint WETH/DAI** buttons are Anvil-only.
+In-app **Mint WETH/DAI** (and vault mDAI) buttons are Anvil-only.
 
 ## Tests
 
@@ -156,7 +184,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`tests/smoke.spec.ts` asserts the desk panels and connect CTA render. Full wallet E2E against Anvil is left manual (MetaMask or Anvil account).
+`tests/smoke.spec.ts` asserts the desk panels (including **Cascade Vault**), demo copy, and connect CTA render. Full wallet E2E against Anvil is left manual (MetaMask or Anvil account).
 
 ```bash
 npm run lint
@@ -181,18 +209,18 @@ GitHub Actions (`.github/workflows/ci.yml`) runs the same lint + build on every 
 ```
 src/
   app/                 # Next.js App Router + providers
-  components/          # Desk UI (wallet, actions, HF, liquidate)
-  hooks/               # Protocol reads / writes
+  components/          # Desk UI (wallet, actions, HF, liquidate, vault)
+  hooks/               # Protocol + vault reads / writes
   lib/                 # wagmi, network mode, contracts, formatters, ABIs
-vendor/abis/           # JSON ABIs from forge build
+vendor/abis/           # JSON ABIs from forge build (LendingPool, CascadeVault, …)
 deployments/           # anvil.json + sepolia.json (+ examples)
-scripts/               # sync-anvil-addresses.mjs
+scripts/               # sync-anvil-addresses.mjs, sync-vault-addresses.mjs
 tests/                 # Playwright smoke
 ```
 
 ## Notes
 
-- Protocol ABIs are vendored from `defi-lending` (`forge build` → `out/`). Re-copy when the Solidity API changes.
-- Fresh Anvil = new addresses. Always re-sync before demoing.
-- Sepolia addresses: see `deployments/sepolia.json` / `sepolia.example.json` (Cascade lending live deploy).
+- Protocol ABIs are vendored from `defi-lending` / `defi-vault` (`forge build` → `out/`). Re-copy when the Solidity API changes.
+- Fresh Anvil = new addresses. Always re-sync lending + vault before demoing (`sync:anvil`, `sync:vault`).
+- Sepolia: lending is live; **vault Sepolia deploy is a follow-up** (placeholders only — no secrets/broadcast attempted from this dApp PR).
 - English UI and docs only. No third-party watermark badges in this repo.

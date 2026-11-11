@@ -6,5 +6,8 @@
   "dai": "0x3e98D8700FfD75078F918870BA13f32a177a7cbd",
   "primaryFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
   "secondaryOracle": "0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09",
-  "notes": "Live Cascade lending deploy on Sepolia (defi-lending PR #3 / block 12111618). Canonical WETH + Chainlink ETH/USD reused; DAI and secondary oracle are mocks. Override via NEXT_PUBLIC_* if needed. Never commit private keys."
+  "cascadeVault": "0x0000000000000000000000000000000000000000",
+  "vaultAsset": "0x0000000000000000000000000000000000000000",
+  "idleStrategy": "0x0000000000000000000000000000000000000000",
+  "notes": "Live Cascade lending deploy on Sepolia (defi-lending PR #3 / block 12111618). Vault fields are placeholders until CascadeVault is deployed on Sepolia — set NEXT_PUBLIC_CASCADE_VAULT / VAULT_ASSET / IDLE_STRATEGY or update this file. Never commit private keys."
 }
