@@ -105,43 +105,48 @@ Suggested demo flow in the UI:
 
 ## Point the UI at Sepolia
 
-Sepolia mode is env-driven. Placeholder zeros in `deployments/sepolia.json` are intentional until [defi-lending](https://github.com/DiegoCascavita/defi-lending) lands a verified Sepolia deploy — then plug addresses without hardcoding secrets.
+Sepolia mode is env-driven. Live Cascade lending addresses ship in `deployments/sepolia.json` (from [defi-lending](https://github.com/DiegoCascavita/defi-lending) Sepolia deploy / PR #3).
 
-1. Copy env and switch network:
+| Contract | Address |
+|---|---|
+| LendingPool | `0x732D2D5E745203eff3a4084d771ceB27B84f665B` |
+| WETH (canonical) | `0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9` |
+| DAI (ERC20Mock) | `0x3e98D8700FfD75078F918870BA13f32a177a7cbd` |
+| Primary ETH/USD (Chainlink) | `0x694AA1769357215DE4FAC081bf1f309aDC325306` |
+| Secondary oracle (mock) | `0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09` |
 
-```bash
-cp .env.example .env.local
-```
-
-In `.env.local`:
+1. Create `.env.local` for Sepolia (do **not** leave Anvil `NEXT_PUBLIC_*` address vars set — env overrides the JSON file):
 
 ```bash
 NEXT_PUBLIC_NETWORK=sepolia
 NEXT_PUBLIC_CHAIN_ID=11155111
 NEXT_PUBLIC_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
-# After lending Sepolia verify — fill these (or edit deployments/sepolia.json):
-NEXT_PUBLIC_LENDING_POOL=0x...
-NEXT_PUBLIC_WETH=0x...
-NEXT_PUBLIC_DAI=0x...
-NEXT_PUBLIC_PRIMARY_FEED=0x...
-NEXT_PUBLIC_SECONDARY_ORACLE=0x...
+# Optional overrides (otherwise deployments/sepolia.json is used):
+# NEXT_PUBLIC_LENDING_POOL=0x732D2D5E745203eff3a4084d771ceB27B84f665B
+# NEXT_PUBLIC_WETH=0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9
+# NEXT_PUBLIC_DAI=0x3e98D8700FfD75078F918870BA13f32a177a7cbd
+# NEXT_PUBLIC_PRIMARY_FEED=0x694AA1769357215DE4FAC081bf1f309aDC325306
+# NEXT_PUBLIC_SECONDARY_ORACLE=0xaC1F2E02A7bdb40FC3521d6b6Cbffbd6BC6d3c09
 ```
 
-2. Restart the Next server (`npm run dev`). The desk subtitle shows **Sepolia · 11155111**; Anvil mint buttons and the Anvil account connector are hidden.
-3. Connect MetaMask (or WalletConnect) on Sepolia. If addresses are still zero, the UI shows a placeholder status banner — protocol calls will fail until deploy addresses are set.
+Public env vars only (`NEXT_PUBLIC_*`). Never commit `PRIVATE_KEY`, mnemonics, or write-capable RPC secrets.
 
-Precedence: `NEXT_PUBLIC_*` env wins over `deployments/sepolia.json`. Prefer env or JSON file updates; never commit private keys.
+2. Restart the Next server (`npm run dev`). The desk subtitle shows **Sepolia · 11155111**; Anvil mint buttons and the Anvil account connector are hidden. A **Sepolia live** banner appears when `contractsConfigured` is true.
+3. Connect MetaMask (or WalletConnect) on Sepolia (`11155111`).
 
-### Sepolia faucets
+Precedence: `NEXT_PUBLIC_*` env wins over `deployments/sepolia.json`.
 
-| Asset | Link |
+### Sepolia faucets / tokens
+
+| Asset | Link / notes |
 |---|---|
 | Sepolia ETH | [Google Cloud Web3 faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) |
 | Sepolia ETH | [Alchemy Sepolia faucet](https://www.alchemy.com/faucets/ethereum-sepolia) |
 | Sepolia ETH | [Infura faucet](https://www.infura.io/faucet/sepolia) |
-| Test tokens | After protocol deploy, use whatever mock/token the lending README documents (or Uniswap Sepolia pools if using public WETH/DAI) |
+| WETH | Canonical Sepolia WETH — wrap ETH with `deposit()` (no `mint`) |
+| DAI | Deployed `ERC20Mock` at the address above (see [defi-lending README](https://github.com/DiegoCascavita/defi-lending)) |
 
-In-app **Mint WETH/DAI** buttons are Anvil-only (mock ERC20s). On Sepolia, fund the wallet from faucets / the protocol’s documented token path.
+In-app **Mint WETH/DAI** buttons are Anvil-only.
 
 ## Tests
 
@@ -160,16 +165,16 @@ npm run build
 
 GitHub Actions (`.github/workflows/ci.yml`) runs the same lint + build on every PR to `Master`/`main`, then a Playwright Chromium smoke (`tests/smoke.spec.ts`) against the default Anvil desk env.
 
-## Cómo probar
+## How to try it
 
-1. Instala dependencias: `npm install`.
-2. Levanta Anvil y despliega `defi-lending` con el script `DeployLending` (comandos arriba).
-3. Sincroniza direcciones: `LENDING_REPO=../defi-lending npm run sync:anvil`.
-4. Arranca la UI: `npm run dev` y abre `http://localhost:3000`.
-5. Conecta con **Anvil account** o MetaMask en red 31337.
-6. Usa **Mint** → **Supply DAI** → **Deposit WETH** → **Borrow**; revisa el health factor.
-7. (Opcional Sepolia) configura `NEXT_PUBLIC_NETWORK=sepolia` + addresses; faucet ETH; sin mint in-app.
-8. (Opcional) `npm run test:e2e` para el smoke de Playwright.
+1. Install deps: `npm install`.
+2. Start Anvil and deploy `defi-lending` with `DeployLending` (commands above).
+3. Sync addresses: `LENDING_REPO=../defi-lending npm run sync:anvil`.
+4. Start the UI: `npm run dev` → `http://localhost:3000`.
+5. Connect with **Anvil account** or MetaMask on chain `31337`.
+6. Flow: **Mint** → **Supply DAI** → **Deposit WETH** → **Borrow**; watch health factor.
+7. Optional Sepolia: set `NEXT_PUBLIC_NETWORK=sepolia` (and clear Anvil address env overrides); faucet ETH; wrap WETH; no in-app mint.
+8. Optional: `npm run test:e2e` for the Playwright smoke.
 
 ## Layout
 
@@ -189,5 +194,5 @@ tests/                 # Playwright smoke
 
 - Protocol ABIs are vendored from `defi-lending` (`forge build` → `out/`). Re-copy when the Solidity API changes.
 - Fresh Anvil = new addresses. Always re-sync before demoing.
-- Sepolia placeholders: replace after `forge script … --broadcast --verify` on lending; see `deployments/sepolia.example.json`.
-- English comments only. No third-party watermark badges in this repo.
+- Sepolia addresses: see `deployments/sepolia.json` / `sepolia.example.json` (Cascade lending live deploy).
+- English UI and docs only. No third-party watermark badges in this repo.

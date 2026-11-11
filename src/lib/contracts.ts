@@ -32,8 +32,8 @@ const fileDeployment = isSepoliaMode ? sepoliaDeployment : anvilDeployment;
 /**
  * Resolve protocol addresses for the active network.
  * Precedence: NEXT_PUBLIC_* env → deployments/{anvil|sepolia}.json.
- * Sepolia placeholders are zero until defi-lending broadcast+verify lands —
- * set env vars or edit deployments/sepolia.json (no secrets in git).
+ * Sepolia ships with live Cascade lending addresses in deployments/sepolia.json;
+ * override via NEXT_PUBLIC_* for local experiments (no secrets in git).
  */
 export const contracts: ProtocolDeployment = {
   chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? fileDeployment.chainId),
@@ -54,7 +54,7 @@ export const contracts: ProtocolDeployment = {
     asAddress(fileDeployment.secondaryOracle, ZERO),
 };
 
-/** True when core market addresses are still zero placeholders (typical pre-Sepolia-deploy). */
+/** True when core market addresses are non-zero (Sepolia JSON or NEXT_PUBLIC_* overrides). */
 export const contractsConfigured =
   contracts.lendingPool !== ZERO &&
   contracts.weth !== ZERO &&

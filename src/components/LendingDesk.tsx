@@ -5,7 +5,7 @@ import { HealthFactor } from "./HealthFactor";
 import { LiquidatePanel } from "./LiquidatePanel";
 import { MarketActions } from "./MarketActions";
 import { MarketOverview } from "./MarketOverview";
-import { contractsConfigured } from "@/lib/contracts";
+import { contracts, contractsConfigured } from "@/lib/contracts";
 import { getActiveChainId, isAnvilMode, isSepoliaMode, networkLabel } from "@/lib/network";
 import { useProtocolReads } from "@/hooks/useProtocolReads";
 
@@ -62,13 +62,23 @@ export function LendingDesk() {
         </div>
       </section>
 
-      {isSepoliaMode && !contractsConfigured ? (
-        <p className="tx-status" role="status">
-          Sepolia addresses are still placeholders. Set{" "}
-          <code>NEXT_PUBLIC_LENDING_POOL</code> / <code>WETH</code> / <code>DAI</code> (and
-          oracle feeds) or update <code>deployments/sepolia.json</code> after the lending
-          Sepolia deploy verifies — see README.
-        </p>
+      {isSepoliaMode ? (
+        contractsConfigured ? (
+          <p className="tx-status" role="status">
+            Sepolia live — reading{" "}
+            <code>
+              {contracts.lendingPool.slice(0, 6)}…{contracts.lendingPool.slice(-4)}
+            </code>{" "}
+            (LendingPool). Mint is Anvil-only; wrap ETH for WETH and use the mock DAI from the
+            deploy — see README.
+          </p>
+        ) : (
+          <p className="tx-status" role="status">
+            Sepolia addresses are still placeholders. Set{" "}
+            <code>NEXT_PUBLIC_LENDING_POOL</code> / <code>WETH</code> / <code>DAI</code> (and
+            oracle feeds) or update <code>deployments/sepolia.json</code> — see README.
+          </p>
+        )
       ) : null}
 
       <div id="desk" className="desk-grid">
